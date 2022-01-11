@@ -67,40 +67,59 @@ defmodule EctoIPRange.Postgrex.IPRangeExtension do
             last_ip: last_ip4_address
           }
 
-      <<32::int32, first_a::size(16)-integer-unsigned, first_b::size(16)-integer-unsigned,
-        first_c::size(16)-integer-unsigned, first_d::size(16)-integer-unsigned,
-        first_e::size(16)-integer-unsigned, first_f::size(16)-integer-unsigned,
-        first_g::size(16)-integer-unsigned, first_h::size(16)-integer-unsigned,
-        last_a::size(16)-integer-unsigned, last_b::size(16)-integer-unsigned,
-        last_c::size(16)-integer-unsigned, last_d::size(16)-integer-unsigned-unsigned,
-        last_e::size(16)-integer-unsigned, last_f::size(16)-integer-unsigned,
-        last_g::size(16)-integer-unsigned, last_h::size(16)-integer-unsigned>> ->
-        first_ip6_address = {
-          first_a,
-          first_b,
-          first_c,
-          first_d,
-          first_e,
-          first_f,
-          first_g,
-          first_h
-        }
-        last_ip6_address = {
-          last_a,
-          last_b,
-          last_c,
-          last_d,
-          last_e,
-          last_f,
-          last_g,
-          last_h
-        }
+          <<12::int32, 3, bits, flag, 8,
+            first_a::size(16)-integer-unsigned, first_b::size(16)-integer-unsigned,
+            first_c::size(16)-integer-unsigned, first_d::size(16)-integer-unsigned>> ->
 
-        %IPRange{
-          range: Range.parse_ipv6(first_ip6_address, last_ip6_address),
-          first_ip: first_ip6_address,
-          last_ip: last_ip6_address
-        }
+            first_address = {first_a, first_b, first_c, first_d, 0, 0, 0, 0}
+            first_address_string = Inet.ntoa(first_address)
+            {cidr_first, cidr_last} = CIDR.parse_ipv6(first_address_string, bits)
+
+
+            %IPRange{
+              range: first_address_string <> "/" <> Integer.to_string(bits),
+              first_ip: cidr_first,
+              last_ip: cidr_last
+            }
+
+            <<20::int32, 3, bits, flag, 16,
+              first_a::size(16)-integer-unsigned, first_b::size(16)-integer-unsigned,
+              first_c::size(16)-integer-unsigned, first_d::size(16)-integer-unsigned,
+              first_e::size(16)-integer-unsigned, first_f::size(16)-integer-unsigned,
+              first_g::size(16)-integer-unsigned, first_h::size(16)-integer-unsigned>> ->
+
+              first_address = {first_a, first_b, first_c, first_d, first_e, first_f, first_g, first_h}
+              first_address_string = Inet.ntoa(first_address)
+              {cidr_first, cidr_last} = CIDR.parse_ipv6(first_address_string, bits)
+
+
+              %IPRange{
+                range: first_address_string <> "/" <> Integer.to_string(bits),
+                first_ip: cidr_first,
+                last_ip: cidr_last
+              }
+
+              <<36::int32, 3, bits, flag, 32,
+                first_a::size(16)-integer-unsigned, first_b::size(16)-integer-unsigned,
+                first_c::size(16)-integer-unsigned, first_d::size(16)-integer-unsigned,
+                first_e::size(16)-integer-unsigned, first_f::size(16)-integer-unsigned,
+                first_g::size(16)-integer-unsigned, first_h::size(16)-integer-unsigned,
+                last_a::size(16)-integer-unsigned, last_b::size(16)-integer-unsigned,
+                last_c::size(16)-integer-unsigned, last_d::size(16)-integer-unsigned,
+                last_e::size(16)-integer-unsigned, last_f::size(16)-integer-unsigned,
+                last_g::size(16)-integer-unsigned, last_h::size(16)-integer-unsigned>> ->
+
+                first_address = {first_a, first_b, first_c, first_d, first_e, first_f, first_g, first_h}
+                last_address = {last_a, last_b, last_c, last_d, last_e, last_f, last_g, last_h}
+                first_address_string = Inet.ntoa(first_address)
+                last_address_string = Inet.ntoa(last_address)
+
+
+                %IPRange{
+                  range: first_address_string <> "-" <> last_address_string,
+                  first_ip: first_address,
+                  last_ip: last_address
+                }
     end
   end
 end
